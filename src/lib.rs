@@ -98,7 +98,7 @@
 //!     }
 //!
 //!     else => {
-//!         println!("No messages pending, taking a nap...");
+//!         println!("no messages pending");
 //!         tokio::time::sleep(Duration::from_millis(50)).await;
 //!     }
 //! }
@@ -116,7 +116,7 @@
 //!     }
 //!
 //!     _ => {
-//!         println!("No messages pending, taking a nap...");
+//!         println!("no messages pending");
 //!         tokio::time::sleep(Duration::from_millis(50)).await;
 //!     }
 //! }
