@@ -103,7 +103,7 @@ match () {
 
 Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 
-### Rate-Limited Message Procesor
+### Rate-Limited Message Processor
 
 ```rust
 /*
