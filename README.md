@@ -128,6 +128,15 @@ match () {
 }
 ```
 
+## Global import
+
+You can make the `tokio_select!` macro globally available in your crate, without needing to import it, with:
+
+```rust
+#[macro_use(tokio_select)]
+extern crate better_tokio_select;
+```
+
 ## Requirements
 
 This crate requires nightly Rust, because custom attribute macros cannot currently be applied to expressions:
@@ -186,15 +195,6 @@ Is transformed into this:
 
 ```txt
 <pattern> = <future> (e if <precondition>)? => <handler>,
-```
-
-## Global import
-
-You can make the `tokio_select!` macro globally available in your crate, without needing to import it, with:
-
-```rust
-#[macro_use(tokio_select)]
-extern crate better_tokio_select;
 ```
 
 <!-- cargo-reedme: end -->
