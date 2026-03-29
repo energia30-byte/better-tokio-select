@@ -33,7 +33,7 @@ This macro has all the same capabilities as `tokio::select!`, but the syntax is 
 
 `tokio::select!` takes a list of branches:
 
-```rust
+```txt
 <pattern> = <async expression> (, if <precondition>)? => <handler>,
 ```
 
@@ -49,7 +49,7 @@ tokio::select! {
 
 `tokio_select!` takes a `match ..` expression as an argument, which has a list of arms:
 
-```rust
+```txt
 .. if let <pattern> = <async expression> (&& <precondition>)? => <handler>,
 ```
 
