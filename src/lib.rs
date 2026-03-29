@@ -123,6 +123,15 @@
 //! */
 //! ```
 //!
+//! # Requirements
+//!
+//! This crate requires nightly Rust, because custom attribute macros cannot currently be applied to expressions:
+//!
+//! ```
+//! #![feature(proc_macro_hygiene)]
+//! #![feature(stmt_expr_attributes)]
+//! ```
+//!
 //! # Design notes
 //!
 //! This section explains *why* that syntax is used.
