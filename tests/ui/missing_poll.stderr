@@ -1,0 +1,5 @@
+error: expected format: pattern | poll!(future)
+ --> tests/ui/missing_poll.rs:8:9
+  |
+8 |         _ | _ => invalid,
+  |         ^

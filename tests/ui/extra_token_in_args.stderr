@@ -1,0 +1,5 @@
+error: unexpected token
+ --> tests/ui/extra_token_in_args.rs:5:27
+  |
+5 |     #[tokio_select(biased !)]
+  |                           ^
