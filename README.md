@@ -95,7 +95,9 @@ match () {
         writer.write_all(&buf[..n]).await?;
     }
 
-    _ | on!(shutdown.recv()) => return Ok(()),
+    _ | on!(shutdown.recv()) => {
+        return Ok(())
+    }
 }
 ```
 
