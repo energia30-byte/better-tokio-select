@@ -4,7 +4,7 @@
 #![doc = concat!("![msrv](https://img.shields.io/badge/msrv-", "nightly", "-blue?style=flat-square&logo=rust)")]
 //! [![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 //!
-//! This crate exports the macro [`#[tokio_select]`](tokio_select), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html) -- can be formatted by `rustfmt`!
+//! This crate exports the macro [`#[tokio_select]`](tokio_select), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
 //!
 //! ```toml
 #![doc = concat!(env!("CARGO_PKG_NAME"), " = ", "\"", env!("CARGO_PKG_VERSION_MAJOR"), ".", env!("CARGO_PKG_VERSION_MINOR"), "\"")]

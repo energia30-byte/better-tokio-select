@@ -21,7 +21,7 @@ cargo-reedme: info-end -->
 ![msrv](https://img.shields.io/badge/msrv-nightly-blue?style=flat-square&logo=rust)
 [![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 
-This crate exports the macro [`#[tokio_select]`](https://docs.rs/better_tokio_select/latest/better_tokio_select/attr.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html) – can be formatted by `rustfmt`!
+This crate exports the macro [`#[tokio_select]`](https://docs.rs/better_tokio_select/latest/better_tokio_select/attr.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
 
 ```toml
 better_tokio_select = "0.1"
