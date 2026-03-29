@@ -40,11 +40,9 @@ This macro has all the same capabilities as `tokio::select!`, but the syntax is 
 Example:
 
 ```rust
-/*
 tokio::select! {
     Ok(res) = reader.read(&mut buf), if can_read => writer.write_all(res.bytes)
 }
-*/
 ```
 
 `#[tokio_select]` applies to a `match` expression, which has a list of arms:
@@ -56,11 +54,9 @@ tokio::select! {
 Example:
 
 ```rust
-/*
 match () {
     Ok(res) | poll!(reader.read(&mut buf)) if can_read => writer.write_all(res.bytes)
 }
-*/
 ```
 
 ## Examples
@@ -70,7 +66,6 @@ match () {
 `tokio::select!`:
 
 ```rust
-/*
 tokio::select! {
     res = reader.read(&mut buf), if can_read => {
         let n = res?;
@@ -82,13 +77,11 @@ tokio::select! {
         return Ok(());
     }
 }
-*/
 ```
 
 `#[tokio_select]`:
 
 ```rust
-/*
 #[tokio_select]
 match () {
     Ok(n) | poll!(reader.read(&mut buf)) if can_read => {
@@ -98,7 +91,6 @@ match () {
 
     _ | poll!(shutdown.recv()) => return Ok(()),
 }
-*/
 ```
 
 Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
@@ -106,7 +98,6 @@ Admittedly, the syntax is a little strange. But it’s also formattable by `rust
 ### Rate-Limited Message Processor
 
 ```rust
-/*
 tokio::select! {
     biased;
 
@@ -119,13 +110,11 @@ tokio::select! {
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
 }
-*/
 ```
 
 `#[tokio_select]`:
 
 ```rust
-/*
 #[tokio_select(biased)]
 match () {
     Some(Message::Data { id, payload }) | poll!(rx.recv()) => {
@@ -137,7 +126,6 @@ match () {
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
 }
-*/
 ```
 
 ## Requirements
@@ -165,11 +153,9 @@ Using a custom DSL, such as `tokio::select!`, it’s easy to come up with an arb
 But if we want `rustfmt` to work, then the expression must parse as valid Rust syntax. A `match` expression is *almost* perfect for this:
 
 ```rust
-/*
 match {
     <pattern> (if <precondition>)? => <handler>,
 }
-*/
 ```
 
 That covers:
@@ -183,11 +169,9 @@ We need to figure out how we can stuff an arbitrary expression into a match arm.
 can expand to patterns, so we can abuse the fact that a match arm takes a `|`-separated list of “patterns”:
 
 ```rust
-/*
 match {
     <pattern> | poll!(<future>) (if <precondition>)? => <handler>,
 }
-*/
 ```
 
 And put whatever we need inside of the `poll!` “macro”, which is really a “fake macro” that does nothing,
@@ -202,6 +186,15 @@ Is transformed into this:
 
 ```txt
 <pattern> = <future> (e if <precondition>)? => <handler>,
+```
+
+## Global import
+
+You can make the `tokio_select!` macro globally available in your crate, without needing to import it, with:
+
+```rust
+#[macro_use(tokio_select)]
+extern crate better_tokio_select;
 ```
 
 <!-- cargo-reedme: end -->
