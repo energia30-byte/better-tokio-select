@@ -206,4 +206,7 @@ Is transformed into this:
 <pattern> = <future> (e if <precondition>)? => <handler>,
 ```
 
+The “scrutinee” `()` in `match () {` is also meaningless, as it is only used to make the expression
+parseable as valid Rust.
+
 <!-- cargo-reedme: end -->

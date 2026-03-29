@@ -204,6 +204,9 @@
 //! ```txt
 //! <pattern> = <future> (e if <precondition>)? => <handler>,
 //! ```
+//!
+//! The "scrutinee" `()` in `match () {` is also meaningless, as it is only used to make the expression
+//! parseable as valid Rust.
 #![allow(rustdoc::invalid_rust_codeblocks)]
 
 use proc_macro::TokenStream;
