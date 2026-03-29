@@ -4,7 +4,6 @@ description = "tokio::select! that can be formatted by rustfmt"
 version = "0.1.0"
 authors = ["Nik Revenco <pm@nikrev.com>"]
 edition = "2021"
-rust-version = "1.64"
 repository = "https://github.com/nik-rev/better-tokio-select"
 license = "MIT OR Apache-2.0"
 keywords = ["tokio", "io", "async", "non-blocking", "select"]

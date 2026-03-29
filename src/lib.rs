@@ -1,16 +1,183 @@
 #![doc = concat!("[![crates.io](https://img.shields.io/crates/v/", env!("CARGO_PKG_NAME"), "?style=flat-square&logo=rust)](https://crates.io/crates/", env!("CARGO_PKG_NAME"), ")")]
 #![doc = concat!("[![docs.rs](https://img.shields.io/docsrs/", env!("CARGO_PKG_NAME"), "?style=flat-square&logo=docs.rs)](https://docs.rs/", env!("CARGO_PKG_NAME"), ")")]
 #![doc = "![license](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue?style=flat-square)"]
-#![doc = concat!("![msrv](https://img.shields.io/badge/msrv-", env!("CARGO_PKG_RUST_VERSION"), "-blue?style=flat-square&logo=rust)")]
+#![doc = concat!("![msrv](https://img.shields.io/badge/msrv-", "nightly", "-blue?style=flat-square&logo=rust)")]
 //! [![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 //!
-//! This crate exports the macro `tokio_select!`, which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html) -- can be formatted by `rustfmt`.
+//! This crate exports the macro [`#[tokio_select]`](tokio_select), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html) -- can be formatted by `rustfmt`!
 //!
 //! ```toml
 #![doc = concat!(env!("CARGO_PKG_NAME"), " = ", "\"", env!("CARGO_PKG_VERSION_MAJOR"), ".", env!("CARGO_PKG_VERSION_MINOR"), "\"")]
 //! ```
 //!
+//! # Syntax
+//!
+//! This macro has all the same capabilities as `tokio::select!`, but the syntax is *slightly* different.
+//!
+//! `tokio::select!` takes a list of branches:
+//!
+//! ```txt
+//! <pattern> = <async expression> (, if <precondition>)? => <handler>,
+//! ```
+//!
+//! Example:
+//!
+//! ```
+//! /*
+//! tokio::select! {
+//!     Ok(res) = reader.read(&mut buf), if can_read => writer.write_all(res.bytes)
+//! }
+//! */
+//! ```
+//!
+//! `#[tokio_select]` applies to a `match` expression, which has a list of arms:
+//!
+//! ```txt
+//! <pattern> | poll!(<async expression>) (if <precondition>)? => <handler>,
+//! ```
+//!
+//! Example:
+//!
+//! ```
+//! /*
+//! match () {
+//!     Ok(res) | poll!(reader.read(&mut buf)) if can_read => writer.write_all(res.bytes)
+//! }
+//! */
+//! ```
+//!
 //! # Examples
+//!
+//! ## TCP Proxy with Cancellation and Guard
+//!
+//! `tokio::select!`:
+//!
+//! ```
+//! /*
+//! tokio::select! {
+//!     res = reader.read(&mut buf), if can_read => {
+//!         let n = res?;
+//!         if n == 0 { return Ok(()); }
+//!         writer.write_all(&buf[..n]).await?;
+//!     }
+//!
+//!     _ = shutdown.recv() => {
+//!         return Ok(());
+//!     }
+//! }
+//! */
+//! ```
+//!
+//! `#[tokio_select]`:
+//!
+//! ```
+//! /*
+//! #[tokio_select]
+//! match () {
+//!     Ok(n) | poll!(reader.read(&mut buf)) if can_read => {
+//!         if n == 0 { return Ok(()); }
+//!         writer.write_all(&buf[..n]).await?;
+//!     }
+//!
+//!     _ | poll!(shutdown.recv()) => return Ok(()),
+//! }
+//! */
+//! ```
+//!
+//! Admittedly, the syntax is a little strange. But it's also formattable by `rustfmt`. Trade-offs, people, trade-offs!
+//!
+//! ## Rate-Limited Message Procesor
+//!
+//! ```
+//! /*
+//! tokio::select! {
+//!     biased;
+//!
+//!     Some(Message::Data { id, payload }) = rx.recv() => {
+//!         process(id, payload).await;
+//!     }
+//!
+//!     else => {
+//!         println!("No messages pending, taking a nap...");
+//!         tokio::time::sleep(Duration::from_millis(50)).await;
+//!     }
+//! }
+//! */
+//! ```
+//!
+//! `#[tokio_select]`:
+//!
+//! ```
+//! /*
+//! #[tokio_select(biased)]
+//! match () {
+//!     Some(Message::Data { id, payload }) | poll!(rx.recv()) => {
+//!         process(id, payload).await;
+//!     }
+//!
+//!     _ => {
+//!         println!("No messages pending, taking a nap...");
+//!         tokio::time::sleep(Duration::from_millis(50)).await;
+//!     }
+//! }
+//! */
+//! ```
+//!
+//! # Design notes
+//!
+//! This section explains *why* that syntax is used.
+//!
+//! A single branch of the `tokio::select!` macro requires:
+//!
+//! - a pattern
+//! - expression (the future)
+//! - optional expression (the `if` condition)
+//! - expression (handler)
+//!
+//! Using a custom DSL, such as `tokio::select!`, it's easy to come up with an arbitrary syntax that looks okay.
+//!
+//! But if we want `rustfmt` to work, then the expression must parse as valid Rust syntax. A `match` expression is *almost* perfect for this:
+//!
+//! ```
+//! /*
+//! match {
+//!     <pattern> (if <precondition>)? => <handler>,
+//! }
+//! */
+//! ```
+//!
+//! That covers:
+//!
+//! - ✅ a pattern
+//! - ❌ expression (the future)
+//! - ✅ optional expression (the `if` condition)
+//! - ✅ expression (handler)
+//!
+//! We need to figure out how we can stuff an arbitrary expression into a match arm. Thankfully, macros
+//! can expand to patterns, so we can abuse the fact that a match arm takes a `|`-separated list of "patterns":
+//!
+//! ```
+//! /*
+//! match {
+//!     <pattern> | poll!(<future>) (if <precondition>)? => <handler>,
+//! }
+//! */
+//! ```
+//!
+//! And put whatever we need inside of the `poll!` "macro", which is really a "fake macro" that does nothing,
+//! the only purpose of the `poll!` wrapper is that the `#[tokio_select]` attribute extracts all tokens
+//! inside, and considers them an expression. Thus this:
+//!
+//! ```txt
+//! <pattern> | poll!(<future>) (if <precondition>)? => <handler>,
+//! ```
+//!
+//! Is transformed into this:
+//!
+//! ```txt
+//! <pattern> = <future> (e if <precondition>)? => <handler>,
+//! ```
+#![allow(rustdoc::invalid_rust_codeblocks)]
 
 use proc_macro::TokenStream;
 use quote::quote;

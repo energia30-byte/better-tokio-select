@@ -15,449 +15,184 @@
 
 cargo-reedme: info-end -->
 
-[![crates.io](https://img.shields.io/crates/v/serde_cursor?style=flat-square&logo=rust)](https://crates.io/crates/serde_cursor)
-[![docs.rs](https://img.shields.io/docsrs/serde_cursor?style=flat-square&logo=docs.rs)](https://docs.rs/serde_cursor)
+[![crates.io](https://img.shields.io/crates/v/better_tokio_select?style=flat-square&logo=rust)](https://crates.io/crates/better_tokio_select)
+[![docs.rs](https://img.shields.io/docsrs/better_tokio_select?style=flat-square&logo=docs.rs)](https://docs.rs/better_tokio_select)
 ![license](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue?style=flat-square)
-![msrv](https://img.shields.io/badge/msrv-1.85-blue?style=flat-square&logo=rust)
-[![github](https://img.shields.io/github/stars/nik-rev/serde-cursor)](https://github.com/nik-rev/serde-cursor)
+![msrv](https://img.shields.io/badge/msrv-nightly-blue?style=flat-square&logo=rust)
+[![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 
-This crate allows you to declaratively specify how to fetch the desired parts of a serde-compatible data format (such as JSON)
-efficiently, without loading it all into memory, using a jq-like language.
+This crate exports the macro [`#[tokio_select]`](https://docs.rs/better_tokio_select/latest/better_tokio_select/attr.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html) – can be formatted by `rustfmt`!
 
 ```toml
-serde_cursor = "0.4"
-```
-
-## Examples
-
-The `Cursor!` macro makes it extremely easy to extract nested fields from data.
-
-### Get version from `Cargo.toml`
-
-```rust
-use serde_cursor::Cursor;
-
-let data = r#"
-    [workspace.package]
-    version = "0.1"
-"#;
-
-let version: String = toml::from_str::<Cursor!(workspace.package.version)>(data)?.0;
-assert_eq!(version, "0.1");
-```
-
-`Cursor!(workspace.package.version)` is the magic juice - this type-macro expands to a type that implements [`serde::Deserialize`](https://docs.rs/serde_core/1.0.228/serde_core/de/trait.Deserialize.html).
-
-**Without `serde_cursor`**:
-
-*Pain and suffering…*
-
-```rust
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct CargoToml {
-    workspace: Workspace
-}
-
-#[derive(Deserialize)]
-struct Workspace {
-    package: Package
-}
-
-#[derive(Deserialize)]
-struct Package {
-    version: String
-}
-
-let data = r#"
-    [workspace.package]
-    version = "0.1"
-"#;
-
-let version = toml::from_str::<CargoToml>(data)?.workspace.package.version;
-```
-
-### Get names of all dependencies from `Cargo.lock`
-
-The index-all `[]` accesses every element in an array:
-
-```rust
-use serde_cursor::Cursor;
-
-let file = r#"
-    [[package]]
-    name = "serde"
-
-    [[package]]
-    name = "rand"
-"#;
-
-let packages: Vec<String> = toml::from_str::<Cursor!(package[].name)>(file)?.0;
-
-assert_eq!(packages, vec!["serde", "rand"]);
+better_tokio_select = "0.1"
 ```
 
 ## Syntax
 
-Specify the type `Vec<String>` after the path `package[].name`:
+This macro has all the same capabilities as `tokio::select!`, but the syntax is *slightly* different.
 
-```rust
-let packages = toml::from_str::<Cursor!(package[].name: Vec<String>)>(file)?.0;
+`tokio::select!` takes a list of branches:
+
+```txt
+<pattern> = <async expression> (, if <precondition>)? => <handler>,
 ```
 
-The type can be omitted, in which case it will be inferred:
+Example:
 
 ```rust
-let packages: Vec<String> = toml::from_str::<Cursor!(package[].name)>(file)?.0;
-```
-
-Fields that consist of identifiers and `-`s can be used without quotes:
-
-```rust
-Cursor!(dev-dependencies.serde.version)
-```
-
-Fields that contain spaces or other special characters must be quoted:
-
-```rust
-Cursor!(ferris."🦀::<>".r#"""#)
-```
-
-You can access specific elements of an array:
-
-```rust
-Cursor!(package[0].name)
-```
-
-## `serde_cursor` + `monostate` = 🧡💛💚💙💜
-
-The [`monostate`](https://github.com/dtolnay/monostate) crate provides the `MustBe!` macro, which returns a type that implements
-[`serde::Deserialize`](https://docs.rs/serde_core/1.0.228/serde_core/de/trait.Deserialize.html), and can only ever deserialize from one specific value.
-
-Together, these 2 crates provide an almost jq-like experience of data processing in Rust:
-
-```rust
-// early exit if the `reason` field is not equal to `"compiler-message"`
-get!(reason: MustBe!("compiler-message"))?;
-get!(message.message: MustBe!("trace_macro"))?;
-
-Ok(Expansion {
-    messages: get!(message.children[].message)?,
-    byte_start: get!(message.spans[0].byte_start)?,
-    byte_end: get!(message.spans[0].byte_end)?,
-})
-```
-
-The jq version of the above processing looks like this:
-
-```jq
-select(.reason == "compiler-message")
-| select(.message.message == "trace_macro")
-| {
-    messages: [.message.children[].message],
-    byte_start: .message.spans[0].byte_start,
-    byte_end: .message.spans[0].byte_end
+/*
+tokio::select! {
+    Ok(res) = reader.read(&mut buf), if can_read => writer.write_all(res.bytes)
 }
+*/
 ```
 
-The full code for the above example looks like this:
+`#[tokio_select]` applies to a `match` expression, which has a list of arms:
+
+```txt
+<pattern> | poll!(<async expression>) (if <precondition>)? => <handler>,
+```
+
+Example:
 
 ```rust
-use monostate::MustBe;
-use serde_cursor::Cursor;
-
-struct Expansion {
-    messages: Vec<String>,
-    byte_start: u32,
-    byte_end: u32,
+/*
+match () {
+    Ok(res) | poll!(reader.read(&mut buf)) if can_read => writer.write_all(res.bytes)
 }
+*/
+```
 
-impl Expansion {
-    fn parse(value: &[u8]) -> serde_json::Result<Self> {
-        macro_rules! get {
-            ($($cursor:tt)*) => {
-                serde_json::from_slice::<
-                    Cursor!($($cursor)*)
-                >(value).map(|it| it.0)
-            };
-        }
+## Examples
 
-        get!(reason: MustBe!("compiler-message"))?;
-        get!(message.message: MustBe!("trace_macro"))?;
+### TCP Proxy with Cancellation and Guard
 
-        Ok(Expansion {
-            messages: get!(message.children[].message)?,
-            byte_start: get!(message.spans[0].byte_start)?,
-            byte_end: get!(message.spans[0].byte_end)?,
-        })
+`tokio::select!`:
+
+```rust
+/*
+tokio::select! {
+    res = reader.read(&mut buf), if can_read => {
+        let n = res?;
+        if n == 0 { return Ok(()); }
+        writer.write_all(&buf[..n]).await?;
+    }
+
+    _ = shutdown.recv() => {
+        return Ok(());
     }
 }
+*/
 ```
 
-<details>
-
-<summary>
-
-For reference, the same logic without `serde_cursor` or `monostate`
-
-</summary>
+`#[tokio_select]`:
 
 ```rust
-use serde::Deserialize;
+/*
+#[tokio_select]
+match () {
+    Ok(n) | poll!(reader.read(&mut buf)) if can_read => {
+        if n == 0 { return Ok(()); }
+        writer.write_all(&buf[..n]).await?;
+    }
 
-struct Expansion {
-    messages: Vec<String>,
-    byte_start: u32,
-    byte_end: u32,
+    _ | poll!(shutdown.recv()) => return Ok(()),
 }
+*/
+```
 
-impl Expansion {
-    fn from_slice(value: &[u8]) -> serde_json::Result<Self> {
-        #[derive(Deserialize)]
-        struct RawDiagnostic {
-            reason: String,
-            message: DiagnosticMessage,
-        }
+Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 
-        #[derive(Deserialize)]
-        struct DiagnosticMessage {
-            message: String,
-            children: Vec<DiagnosticChild>,
-            spans: Vec<DiagnosticSpan>,
-        }
+### Rate-Limited Message Procesor
 
-        #[derive(Deserialize)]
-        struct DiagnosticChild {
-            message: String,
-        }
+```rust
+/*
+tokio::select! {
+    biased;
 
-        #[derive(Deserialize)]
-        struct DiagnosticSpan {
-            byte_start: u32,
-            byte_end: u32,
-        }
+    Some(Message::Data { id, payload }) = rx.recv() => {
+        process(id, payload).await;
+    }
 
-        let raw: RawDiagnostic = serde_json::from_slice(value)?;
-
-        if raw.reason != "compiler-message" || raw.message.message != "trace_macro" {
-            return Err(serde::de::Error::custom("..."));
-        }
-
-        let primary_span = raw.message.spans.get(0)
-            .ok_or_else(|| serde::de::Error::custom("..."))?;
-
-        Ok(Expansion {
-            messages: raw.message.children.into_iter().map(|c| c.message).collect(),
-            byte_start: primary_span.byte_start,
-            byte_end: primary_span.byte_end,
-        })
+    else => {
+        println!("No messages pending, taking a nap...");
+        tokio::time::sleep(Duration::from_millis(50)).await;
     }
 }
+*/
 ```
 
-</details>
-
-## Ranges
-
-Ranges are like `[]` but for only for elements with an index that falls in the range:
+`#[tokio_select]`:
 
 ```rust
-Cursor!(package[4..]);
-Cursor!(package[..8]);
-Cursor!(package[4..8]);
-Cursor!(package[4..=8]);
-```
+/*
+#[tokio_select(biased)]
+match () {
+    Some(Message::Data { id, payload }) | poll!(rx.recv()) => {
+        process(id, payload).await;
+    }
 
-## Interpolations
-
-It’s not uncommon for multiple queries to get quite repetitive:
-
-```rust
-let pressure: Vec<f64> = toml::from_str::<Cursor!(france.properties.timeseries[].data.instant.details.air_pressure_at_sea_level)>(france)?.0;
-let humidity: Vec<f64> = toml::from_str::<Cursor!(japan.properties.timeseries[].data.instant.details.relative_humidity)>(japan)?.0;
-let temperature: Vec<f64> = toml::from_str::<Cursor!(japan.properties.timeseries[].data.instant.details.air_temperature)>(japan)?.0;
-```
-
-`serde_cursor` supports **interpolations**. You can factor out a common path into a type `Details`, and then interpolate it with `$Details` in the path inside `Cursor!`:
-
-```rust
-type Details<RestOfPath> = serde_cursor::Path!(properties.timeseries[].data.instant.details + RestOfPath);
-
-let pressure: Vec<f64> = toml::from_str::<Cursor!(france.$Details.air_pressure_at_sea_level)>(france)?.0;
-let humidity: Vec<f64> = toml::from_str::<Cursor!(japan.$Details.relative_humidity)>(japan)?.0;
-let temperature: Vec<f64> = toml::from_str::<Cursor!(japan.$Details.air_temperature)>(japan)?.0;
-```
-
-## `serde_cursor` vs [`serde_query`](https://github.com/pandaman64/serde-query)
-
-`serde_query` also implements jq-like queries, but more verbosely.
-
-### Single query
-
-`serde_cursor`:
-
-```rust
-use serde_cursor::Cursor;
-
-let data = r#"{ "commits": [{"author": "Ferris"}] }"#;
-
-let authors: Vec<String> = serde_json::from_str::<Cursor!(commits[].author)>(data)?.0;
-```
-
-`serde_query`:
-
-```rust
-use serde_query::Deserialize;
-
-#[derive(Deserialize)]
-struct Data {
-    #[query(".commits.[].author")]
-    authors: Vec<String>,
+    _ => {
+        println!("No messages pending, taking a nap...");
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
 }
-
-let data = r#"{ "commits": [{"author": "Ferris"}] }"#;
-let data: Data = serde_json::from_str(data)?;
-
-let authors = data.authors;
+*/
 ```
 
-### Storing queries in a `struct`
+## Design notes
 
-`serde_cursor`:
+This section explains *why* that syntax is used.
+
+A single branch of the `tokio::select!` macro requires:
+
+- a pattern
+- expression (the future)
+- optional expression (the `if` condition)
+- expression (handler)
+
+Using a custom DSL, such as `tokio::select!`, it’s easy to come up with an arbitrary syntax that looks okay.
+
+But if we want `rustfmt` to work, then the expression must parse as valid Rust syntax. A `match` expression is *almost* perfect for this:
 
 ```rust
-use serde::Deserialize;
-use serde_cursor::Cursor;
-
-#[derive(Deserialize)]
-struct Data {
-    #[serde(rename = "commits")]
-    authors: Cursor!([].author: Vec<String>),
-    count: usize,
+/*
+match {
+    <pattern> (if <precondition>)? => <handler>,
 }
-
-let data = r#"{ "count": 1, "commits": [{"author": "Ferris"}] }"#;
-
-let data: Data = serde_json::from_str(data)?;
+*/
 ```
 
-`serde_query`:
+That covers:
+
+- ✅ a pattern
+- ❌ expression (the future)
+- ✅ optional expression (the `if` condition)
+- ✅ expression (handler)
+
+We need to figure out how we can stuff an arbitrary expression into a match arm. Thankfully, macros
+can expand to patterns, so we can abuse the fact that a match arm takes a `|`-separated list of “patterns”:
 
 ```rust
-use serde_query::Deserialize;
-
-#[derive(Deserialize)]
-struct Data {
-    #[query(".commits.[].author")]
-    authors: Vec<String>,
-    #[query(".count")]
-    count: usize,
+/*
+match {
+    <pattern> | poll!(<future>) (if <precondition>)? => <handler>,
 }
-
-let data = r#"{ "count": 1, "commits": [{"author": "Ferris"}] }"#;
-
-let data: Data = serde_json::from_str(data)?;
+*/
 ```
 
-## Great error messages
+And put whatever we need inside of the `poll!` “macro”, which is really a “fake macro” that does nothing,
+the only purpose of the `poll!` wrapper is that the `#[tokio_select]` attribute extracts all tokens
+inside, and considers them an expression. Thus this:
 
-When deserialization fails, you get the exact path of where the failure occurred:
-
-```rust
-use serde_cursor::Cursor;
-
-let data = serde_json::json!({ "author": { "id": "not-a-number" } });
-let result = serde_json::from_value::<Cursor!(author.id: i32)>(data);
-let err = result.unwrap_err().to_string();
-assert_eq!(err, r#".author.id: invalid type: string "not-a-number", expected i32"#);
+```txt
+<pattern> | poll!(<future>) (if <precondition>)? => <handler>,
 ```
 
-## `serde_with` integration
+Is transformed into this:
 
-If `feature = "serde_with"` is enabled, the type returned by `Cursor!` will implement [`serde_with::DeserializeAs`](https://docs.rs/serde_with/latest/serde_with/trait.DeserializeAs.html) and [`serde_with::SerializeAs`](https://docs.rs/serde_with/latest/serde_with/trait.SerializeAs.html),
-meaning you can use it with the `#[serde_as]` attribute:
-
-```rust
-use serde::{Serialize, Deserialize};
-use serde_cursor::Cursor;
-
-#[serde_as]
-#[derive(Serialize, Deserialize)]
-struct CargoToml {
-    #[serde(rename = "workspace")]
-    #[serde_as(as = "Cursor!(package.version)")]
-    version: String,
-}
-
-let toml: CargoToml = toml::from_str("workspace = { package = { version = '0.1.0' } }")?;
-assert_eq!(toml.version, "0.1.0");
-assert_eq!(serde_json::to_string(&toml)?, r#"{"workspace":{"package":{"version":"0.1.0"}}}"#);
+```txt
+<pattern> = <future> (e if <precondition>)? => <handler>,
 ```
-
-## How does it work?
-
-The `Cursor!` macro expands to a recursive type that implements [`serde::Deserialize`](https://docs.rs/serde_core/1.0.228/serde_core/de/trait.Deserialize.html).
-Information on how to access the nested fields is stored entirely inside the type system.
-
-Consider this query, which gets the first dependency of every dependency in `Cargo.toml`:
-
-```rust
-Cursor!(package[].dependencies[0]: String)
-```
-
-For this `Cargo.lock`, it would extract `["libc", "find-msvc-tools"]`:
-
-```toml
-[[package]]
-name = "android_system_properties"
-dependencies = ["libc"]
-
-[[package]]
-name = "cc"
-dependencies = ["find-msvc-tools", "shlex"]
-```
-
-That macro is expanded into a `Cursor` type, which implements [`serde::Deserialize`](https://docs.rs/serde_core/1.0.228/serde_core/de/trait.Deserialize.html) and [`serde::Serialize`](https://docs.rs/serde_core/1.0.228/serde_core/ser/trait.Serialize.html):
-
-```rust
-Cursor<
-    String, // : String
-    Path<
-        Field<"package">, // .package
-        Path<
-            IndexAll, // []
-            Path<
-                Field<"dependencies">, // .dependencies
-                Path<
-                    Index<0>, // [0]
-                    PathEnd
-                >,
-            >,
-        >,
-    >,
->
-```
-
-The above is essentially an equivalent to:
-
-```rust
-vec![
-    Segment::Field("package"), // .package
-    Segment::IndexAll, // []
-    Segment::Field("dependencies"), // .dependencies
-    Segment::Index(0) // [0]
-]
-```
-
-Except it exists entirely in the type system.
-
-Each time the [`serde::Deserialize::deserialize()`](https://docs.rs/serde/latest/serde/trait.Deserialize.html#tymethod.deserialize) function is called,
-the first segment of the path (`.package`) is processed, and the rest of the path (`[].dependencies[0]`) is passed to the
-[`serde::Deserialize`](https://docs.rs/serde_core/1.0.228/serde_core/de/trait.Deserialize.html) trait, again, and again - until the path is empty.
-
-Once the path is empty, we finally get to the type of the field - the `String` in the above example,
-and finally call [`serde::Deserialize::deserialize()`](https://docs.rs/serde/latest/serde/trait.Deserialize.html#tymethod.deserialize) on that, to finish things off -
-this `String` is then bubbled up the stack and returned from `<Cursor<String, _> as serde::Deserialize>::deserialize`.
 
 <!-- cargo-reedme: end -->
