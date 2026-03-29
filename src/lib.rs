@@ -71,15 +71,12 @@ pub fn tokio_select(args: TokenStream, input: TokenStream) -> TokenStream {
         }
     }
 
-    let a = quote! {
+    quote! {
         ::tokio::select! {
             #select_arms
         }
-    };
-
-    // panic!("{a}");
-
-    a.into()
+    }
+    .into()
 }
 
 mod kw {
