@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `better_tokio_select` can now be used on **stable rust**, as low as Rust 1.64!
+- `better_tokio_select` can now be used on **stable rust**, as low as Rust 1.71!
 - The macro is now a function-like macro, i.e. `better_tokio_select!`
 - Syntax of the macro has been changed
 
