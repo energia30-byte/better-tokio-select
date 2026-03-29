@@ -21,7 +21,7 @@ cargo-reedme: info-end -->
 ![msrv](https://img.shields.io/badge/msrv-nightly-blue?style=flat-square&logo=rust)
 [![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 
-This crate exports the macro [`#[tokio_select]`](https://docs.rs/better_tokio_select/latest/better_tokio_select/macro.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
+This crate exports the macro [`tokio_select!`](https://docs.rs/better_tokio_select/latest/better_tokio_select/macro.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
 
 ```toml
 better_tokio_select = "0.1"
@@ -47,7 +47,7 @@ tokio::select! {
 }
 ```
 
-`#[tokio_select]` applies to a `match` expression, which has a list of arms:
+`tokio_select!` takes a `match ..` expression as an argument, which has a list of arms:
 
 ```txt
 .. if let <pattern> = <async expression> (&& <precondition>)? => <handler>,
@@ -62,6 +62,11 @@ tokio_select!(match .. {
     }
 })
 ```
+
+For `rustfmt` to work, the argument to a macro must be a valid Rust expression. Hence the odd-looking `..`s.
+Rust compiler expects a pattern in that position, and we provide it with one.
+
+Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 
 ## Examples
 
@@ -83,7 +88,7 @@ tokio::select! {
 }
 ```
 
-`#[tokio_select]`:
+`tokio_select!`:
 
 ```rust
 tokio_select!(match .. {
@@ -98,8 +103,6 @@ tokio_select!(match .. {
     }
 })
 ```
-
-Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 
 ### Rate-Limited Message Processor
 
@@ -118,7 +121,7 @@ tokio::select! {
 }
 ```
 
-`#[tokio_select]`:
+`tokio_select!`:
 
 ```rust
 tokio_select!(biased, match .. {

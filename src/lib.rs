@@ -4,7 +4,7 @@
 #![doc = concat!("![msrv](https://img.shields.io/badge/msrv-", "nightly", "-blue?style=flat-square&logo=rust)")]
 //! [![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
 //!
-//! This crate exports the macro [`#[tokio_select]`](tokio_select), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
+//! This crate exports the macro [`tokio_select!`], which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
 //!
 //! ```toml
 #![doc = concat!(env!("CARGO_PKG_NAME"), " = ", "\"", env!("CARGO_PKG_VERSION_MAJOR"), ".", env!("CARGO_PKG_VERSION_MINOR"), "\"")]
@@ -32,7 +32,7 @@
 //! # */
 //! ```
 //!
-//! `#[tokio_select]` applies to a `match` expression, which has a list of arms:
+//! `tokio_select!` takes a `match ..` expression as an argument, which has a list of arms:
 //!
 //! ```txt
 //! .. if let <pattern> = <async expression> (&& <precondition>)? => <handler>,
@@ -49,6 +49,11 @@
 //! })
 //! # */
 //! ```
+//!
+//! For `rustfmt` to work, the argument to a macro must be a valid Rust expression. Hence the odd-looking `..`s.
+//! Rust compiler expects a pattern in that position, and we provide it with one.
+//!
+//! Admittedly, the syntax is a little strange. But it's also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 //!
 //! # Examples
 //!
@@ -72,7 +77,7 @@
 //! # */
 //! ```
 //!
-//! `#[tokio_select]`:
+//! `tokio_select!`:
 //!
 //! ```
 //! # /*
@@ -89,8 +94,6 @@
 //! })
 //! # */
 //! ```
-//!
-//! Admittedly, the syntax is a little strange. But it's also formattable by `rustfmt`. Trade-offs, people, trade-offs!
 //!
 //! ## Rate-Limited Message Processor
 //!
@@ -111,7 +114,7 @@
 //! # */
 //! ```
 //!
-//! `#[tokio_select]`:
+//! `tokio_select!`:
 //!
 //! ```
 //! # /*
