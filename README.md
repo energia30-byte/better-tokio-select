@@ -1,4 +1,4 @@
-# `serde_cursor`
+# `better_tokio_select`
 
 <!-- cargo-reedme: start -->
 
