@@ -167,7 +167,7 @@
 //!
 //! ```
 //! # /*
-//! match {
+//! match () {
 //!     <pattern> (if <precondition>)? => <handler>,
 //! }
 //! # */
@@ -185,7 +185,7 @@
 //!
 //! ```
 //! # /*
-//! match {
+//! match () {
 //!     <pattern> | on!(<future>) (if <precondition>)? => <handler>,
 //! }
 //! # */

@@ -171,7 +171,7 @@ Using a custom DSL, such as `tokio::select!`, it’s easy to come up with an arb
 But if we want `rustfmt` to work, then the expression must parse as valid Rust syntax. A `match` expression is *almost* perfect for this:
 
 ```rust
-match {
+match () {
     <pattern> (if <precondition>)? => <handler>,
 }
 ```
@@ -187,7 +187,7 @@ We need to figure out how we can stuff an arbitrary expression into a match arm.
 can expand to patterns, so we can abuse the fact that a match arm takes a `|`-separated list of “patterns”:
 
 ```rust
-match {
+match () {
     <pattern> | on!(<future>) (if <precondition>)? => <handler>,
 }
 ```
